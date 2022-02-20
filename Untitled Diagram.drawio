@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2022-02-20T15:01:26.132Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36" etag="PgVEUNfDuQnwWcl-9uLv" version="16.2.4" type="github">
+<mxfile host="app.diagrams.net" modified="2022-02-20T15:02:02.720Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36" etag="gvt1jvjn69CbwtbzzyVl" version="16.2.4" type="github">
   <diagram name="Page-1" id="90a13364-a465-7bf4-72fc-28e22215d7a0">
     <mxGraphModel dx="2082" dy="795" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1.5" pageWidth="1169" pageHeight="826" background="none" math="0" shadow="0">
       <root>
@@ -32,21 +32,15 @@
           <mxGeometry x="597" y="444" width="120" height="150" as="geometry" />
         </mxCell>
         <mxCell id="3a17f1ce550125da-10" value="Tables and documents" style="whiteSpace=wrap;html=1;shadow=1;fontSize=18;fillColor=#f5f5f5;strokeColor=#666666;" parent="1" vertex="1">
-          <mxGeometry x="740" y="774" width="145" height="120" as="geometry" />
-        </mxCell>
-        <mxCell id="3a17f1ce550125da-18" style="edgeStyle=elbowEdgeStyle;rounded=0;html=1;startArrow=none;startFill=0;jettySize=auto;orthogonalLoop=1;fontSize=18;elbow=vertical;" parent="1" source="3a17f1ce550125da-11" target="3a17f1ce550125da-10" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="3a17f1ce550125da-11" value="DC Power Supplies" style="whiteSpace=wrap;html=1;shadow=1;fontSize=18;fillColor=#f5f5f5;strokeColor=#666666;" parent="1" vertex="1">
-          <mxGeometry x="550" y="804" width="120" height="60" as="geometry" />
+          <mxGeometry x="799.5" y="774" width="145" height="120" as="geometry" />
         </mxCell>
         <mxCell id="3a17f1ce550125da-26" style="edgeStyle=elbowEdgeStyle;rounded=0;html=1;startArrow=none;startFill=0;jettySize=auto;orthogonalLoop=1;fontSize=18;" parent="1" edge="1">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="817" y="734" as="sourcePoint" />
-            <mxPoint x="817" y="774" as="targetPoint" />
+            <mxPoint x="871.5" y="734" as="sourcePoint" />
+            <mxPoint x="871.5" y="774" as="targetPoint" />
             <Array as="points">
-              <mxPoint x="817" y="754" />
-              <mxPoint x="847" y="764" />
+              <mxPoint x="871.5" y="754" />
+              <mxPoint x="901.5" y="764" />
             </Array>
           </mxGeometry>
         </mxCell>
