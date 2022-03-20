@@ -148,16 +148,16 @@
     "stats": {
         "scanner": "nmap",
         "args": "F:/Tools/Nmap/nmap.exe -oX - --top-ports 10 192.168.0.252",
-        "start": "1647735574",
-        "startstr": "Sun Mar 20 01:19:34 2022",
+        "start": "1647743984",
+        "startstr": "Sun Mar 20 03:39:44 2022",
         "version": "7.92",
         "xmloutputversion": "1.05"
     },
     "runtime": {
-        "time": "1647735580",
-        "timestr": "Sun Mar 20 01:19:40 2022",
-        "summary": "Nmap done at Sun Mar 20 01:19:40 2022; 1 IP address (1 host up) scanned in 6.76 seconds",
-        "elapsed": "6.76",
+        "time": "1647743991",
+        "timestr": "Sun Mar 20 03:39:51 2022",
+        "summary": "Nmap done at Sun Mar 20 03:39:51 2022; 1 IP address (1 host up) scanned in 6.77 seconds",
+        "elapsed": "6.77",
         "exit": "success"
     }
 }

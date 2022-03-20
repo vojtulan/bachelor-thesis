@@ -9,15 +9,7 @@ from openpyxl import Workbook
 from napalm import get_network_driver
 import os
 
-class DeviceData:
-  def __init__(self, deviceConfig, arpTables, macTable, interfaces, interfacesIp, interfacesCounter, lldpNeighbors):
-    self.deviceConfig = deviceConfig
-    self.arpTables = arpTables
-    self.macTable = macTable
-    self.interfaces = interfaces
-    self.interfacesIp = interfacesIp
-    self.interfacesCounter = interfacesCounter
-    self.lldpNeighbors = lldpNeighbors
+from types import SimpleNamespace
 
 #Def Functions
 def FetchNmapData(ipAddress):
@@ -35,7 +27,7 @@ def CreateNapalmConnection(ipAddress, driver, sshUserName, sshPassword):
     
     device.open() 
     
-    return device 
+    return device
 
 def ResolveDriver(ipAddress, sshUserName, sshPassword, defaultDriver):
 
@@ -60,13 +52,53 @@ def ResolveDriver(ipAddress, sshUserName, sshPassword, defaultDriver):
             except Exception as e:
                 print("Not huawei or Cisco Device. Quiting ...", e)
 
-def SaveDeviceDataAsWorksheet(deviceData, path):
+def CreateWorksheet(workBook, workSheetName, dataCollection):
+
+    workSheet = workBook.create_sheet(workSheetName)
+
+    workSheet.append(list(dataCollection[0].keys()))
+
+    for data in dataCollection:
+        workSheet.append(list(data.values()))
     
-    workbook = Workbook()
+def ConvertDictInDictToDictInList(dataDictDict, newColumnName):
+
+    #vytahneme klice
+    keys = list(dataDictDict.keys())
+
+    listDict = []
+
+    for key in keys:
+        
+        #ke klicum ve sloupci prilepime hodnoty
+        dataDict = { newColumnName: key}
+
+        #tady se prilepi hodnoty ke klici (jako tx errors)
+        dataDict.update(dataDictDict[key])
+
+        listDict.append(dataDict)
+
+    return listDict
 
 
 
-    workbook.save(path)
+
+def SaveDeviceDataAsWorkbook(deviceData, path):
+    
+    workBook = Workbook()
+
+    CreateWorksheet(workBook, "macTable", deviceData["macTable"])
+    CreateWorksheet(workBook, "arpTable", deviceData["arpTable"])
+
+    interfacesData = ConvertDictInDictToDictInList(deviceData["interfaces"], "interface")
+    interfaceCountersData = ConvertDictInDictToDictInList(deviceData["interfacesCounter"], "interfacesCounter")
+
+    CreateWorksheet(workBook, "interfaces", interfacesData)
+    CreateWorksheet(workBook, "interfacesCounter", interfaceCountersData)
+
+    del workBook['Sheet']
+    workBook.save(path)
+
 
 def SaveDeviceConfigFile(deviceConfig, path):
     deviceConfigFile = open(path, "w",encoding='utf8')
@@ -109,33 +141,38 @@ deviceType = ""
 for ip in ipAddresessToScan:
 
     
-    connectionVariables = ResolveDriver(ip, sshUserName, sshPassword, defaultDriver)
-
-    connection = connectionVariables[0]
-    connectionOs = connectionVariables[1]
-
-    print(connectionOs)
-
-    deviceData = DeviceData(
-       deviceConfig = str(connection.get_config()["running"]),
-       arpTables = connection.get_arp_table(),
-       macTable = connection.get_mac_address_table(),
-       interfaces = connection.get_interfaces(),
-       interfacesIp = connection.get_interfaces_ip(),
-       interfacesCounter = connection.get_interfaces_counters(),
-       lldpNeighbors = connection.get_lldp_neighbors())
-
-
-    if connectionOs == "HuaweiVrp5":
-       print(vars(deviceData))
-       
+    #snazat
+    deviceData = json.loads(open("./outputs/susenky.json",'r').read())
     
-    elif connectionOs == "HuaweiVrp8":
-       deviceData.deviceUsers = connection.get_device_users()
+    #zprovoznit
+    if not False and not True and not False or not True and not not not not not False:
+        connectionVariables = ResolveDriver(ip, sshUserName, sshPassword, defaultDriver)
 
-    elif connectionOs == "IOS":
-        deviceData.deviceUsers = connection.get_device_users()
-        deviceData.blaBla = 'blabla'
+        connection = connectionVariables[0]
+        connectionOs = connectionVariables[1]
+
+        print(connectionOs)
+
+        deviceData = {
+           "deviceConfig": str(connection.get_config()["running"]),
+           "arpTable" : connection.get_arp_table(),
+           "macTable" : connection.get_mac_address_table(),
+           "interfaces" : connection.get_interfaces(),
+           "interfacesIp" : connection.get_interfaces_ip(),
+           "interfacesCounter" : connection.get_interfaces_counters(),
+           "lldpNeighbors" : connection.get_lldp_neighbors()}
+
+
+        if connectionOs == "HuaweiVrp5":
+           print(deviceData)
+
+
+        elif connectionOs == "HuaweiVrp8":
+           deviceData["deviceUsers"] = connection.get_device_users()
+
+        elif connectionOs == "IOS":
+            deviceData["deviceUsers"] = connection.get_device_users()
+            deviceData["blaBla"] = 'blabla'
 
     deviceOutputFolderPath = "./outputs/devices/" + ip.replace(".", "_")
     try:
@@ -143,14 +180,13 @@ for ip in ipAddresessToScan:
     except:
         pass
 
+    #creates device data persistence layer
     #nmapRawJson = open("./outputs/susenky.json", "w",encoding='utf8')
     #nmapRawJson.write(json.dumps(deviceData.__dict__, indent=4))
 
+    SaveDeviceConfigFile(deviceData["deviceConfig"], deviceOutputFolderPath + "/config.txt")
     
-
-    SaveDeviceConfigFile(deviceData.deviceConfig, deviceOutputFolderPath + "/config.txt")
-    
-    SaveDeviceDataAsWorksheet(deviceData, deviceOutputFolderPath + "/deviceInfo.xlsx")
+    SaveDeviceDataAsWorkbook(deviceData, deviceOutputFolderPath + "/deviceInfo.xlsx")
 
 
 
