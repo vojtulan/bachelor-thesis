@@ -1,0 +1,727 @@
+{
+    "deviceConfig": "\n!Software Version V200R007C00SPC500\n#\nsysname Test_HOSTNAME\n#\nlldp enable\n#\nclock timezone UTC add 00:00:00\n#\naaa\n authentication-scheme default\n authorization-scheme default\n accounting-scheme default\n domain default\n domain default_admin\n local-user admin password irreversible-cipher %#%#mIDKJTFfnX&J:`HYl_wW%ui$~\"M(k&,GrsKuoej(/DSmK\\lI'C4A}&NN!{9/%#%#\n local-user admin service-type http\n local-user altepro password irreversible-cipher %#%#oQtu+@mC%Xf5`L*u5r9T1J~f,Q#!L%+Hpx'gxYaCWG(iH.)R&+Mq[I7VxN%;%#%#\n local-user altepro privilege level 15\n local-user altepro service-type terminal ssh\n#\ninterface Vlanif1\n ip address 192.168.0.252 255.255.255.0\n#\ninterface GigabitEthernet0/0/1\n#\ninterface GigabitEthernet0/0/2\n#\ninterface GigabitEthernet0/0/3\n#\ninterface GigabitEthernet0/0/4\n#\ninterface GigabitEthernet0/0/5\n#\ninterface GigabitEthernet0/0/6\n#\ninterface GigabitEthernet0/0/7\n#\ninterface GigabitEthernet0/0/8\n#\ninterface GigabitEthernet0/0/9\n#\ninterface GigabitEthernet0/0/10\n#\ninterface GigabitEthernet0/0/11\n#\ninterface GigabitEthernet0/0/12\n#\ninterface GigabitEthernet0/0/13\n#\ninterface GigabitEthernet0/0/14\n#\ninterface GigabitEthernet0/0/15\n#\ninterface GigabitEthernet0/0/16\n#\ninterface GigabitEthernet0/0/17\n#\ninterface GigabitEthernet0/0/18\n#\ninterface GigabitEthernet0/0/19\n#\ninterface GigabitEthernet0/0/20\n#\ninterface GigabitEthernet0/0/21\n#\ninterface GigabitEthernet0/0/22\n#\ninterface GigabitEthernet0/0/23\n#\ninterface GigabitEthernet0/0/24\n description Management\n port link-type access\n#\ninterface GigabitEthernet0/0/25\n#\ninterface GigabitEthernet0/0/26\n#\ninterface GigabitEthernet0/0/27\n#\ninterface GigabitEthernet0/0/28\n#\ninterface NULL0\n#\nstelnet server enable\nssh user altepro\nssh user altepro authentication-type password\nssh user altepro service-type stelnet\n#\nlldp management-address 192.168.0.252 \n#\nuser-interface con 0\n authentication-mode password\n set authentication password cipher $1a$B1y!~c.>b3$19L&1,9]T=3}C|CYk0')nr2\">dA/t.T#Ke@Q(DjC$\nuser-interface vty 0 4\n authentication-mode aaa\n idle-timeout 0 0\nuser-interface vty 16 20\n#\nreturn",
+    "arpTables": [
+        {
+            "interface": "GE0/0/24",
+            "mac": "b4:2e:99:fc:17:d1",
+            "ip": "192.168.0.10",
+            "age": -1.0
+        }
+    ],
+    "macTable": [
+        {
+            "mac": "B4:2E:99:FC:17:D1",
+            "interface": "GE0/0/24",
+            "vlan": 1,
+            "static": false,
+            "active": true,
+            "authen": false,
+            "moves": -1,
+            "last_move": -1.0
+        },
+        {
+            "mac": "E4:5F:01:5E:0E:40",
+            "interface": "GE0/0/24",
+            "vlan": 1,
+            "static": false,
+            "active": true,
+            "authen": false,
+            "moves": -1,
+            "last_move": -1.0
+        },
+        {
+            "mac": "E8:65:D4:1F:4A:10",
+            "interface": "GE0/0/24",
+            "vlan": 1,
+            "static": false,
+            "active": true,
+            "authen": false,
+            "moves": -1,
+            "last_move": -1.0
+        },
+        {
+            "mac": "EC:AD:B8:83:D3:1A",
+            "interface": "GE0/0/24",
+            "vlan": 1,
+            "static": false,
+            "active": true,
+            "authen": false,
+            "moves": -1,
+            "last_move": -1.0
+        }
+    ],
+    "interfaces": {
+        "GigabitEthernet0/0/1": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/2": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/3": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/4": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/5": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/6": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/7": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/8": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/9": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/10": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/11": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/12": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/13": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/14": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/15": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/16": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/17": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/18": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/19": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/20": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/21": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/22": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/23": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/24": {
+            "description": "Management",
+            "is_enabled": true,
+            "is_up": true,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/25": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/26": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/27": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "GigabitEthernet0/0/28": {
+            "description": "Switch Port, Link-type : access(negotiated), ",
+            "is_enabled": false,
+            "is_up": false,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": 1000
+        },
+        "NULL0": {
+            "description": "Route Port,The Maximum Transmit Unit is 1500",
+            "is_enabled": true,
+            "is_up": true,
+            "last_flapped": -1.0,
+            "mac_address": "",
+            "speed": -1
+        },
+        "Vlanif1": {
+            "description": "Route Port,The Maximum Transmit Unit is 1500",
+            "is_enabled": true,
+            "is_up": true,
+            "last_flapped": -1.0,
+            "mac_address": "68:8F:84:04:B2:C8",
+            "speed": -1
+        }
+    },
+    "interfacesIp": {
+        "Vlanif1": {
+            "ipv4": {
+                "192.168.0.252": {
+                    "prefix_length": 24
+                }
+            }
+        }
+    },
+    "interfacesCounter": {
+        "GigabitEthernet0/0/1": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/2": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/3": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/4": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/5": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/6": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/7": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/8": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/9": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/10": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/11": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/12": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/13": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/14": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/15": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/16": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/17": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/18": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/19": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/20": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/21": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/22": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/23": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/24": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 9134041,
+            "rx_octets": 17773634,
+            "tx_unicast_packets": 26100,
+            "rx_unicast_packets": 22004,
+            "tx_multicast_packets": 21206,
+            "rx_multicast_packets": 24462,
+            "tx_broadcast_packets": 2,
+            "rx_broadcast_packets": 44863
+        },
+        "GigabitEthernet0/0/25": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/26": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/27": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "GigabitEthernet0/0/28": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "NULL0": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        },
+        "Vlanif1": {
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "tx_discards": 0,
+            "rx_discards": 0,
+            "tx_octets": 0,
+            "rx_octets": 0,
+            "tx_unicast_packets": 0,
+            "rx_unicast_packets": 0,
+            "tx_multicast_packets": 0,
+            "rx_multicast_packets": 0,
+            "tx_broadcast_packets": 0,
+            "rx_broadcast_packets": 0
+        }
+    },
+    "lldpNeighbors": {}
+}
