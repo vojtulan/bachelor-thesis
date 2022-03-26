@@ -1,0 +1,17 @@
+{
+    "stats": {
+        "scanner": "nmap",
+        "args": "F:/Tools/Nmap/nmap.exe -oX - --top-ports 10 192.168.0.252",
+        "start": "1648311563",
+        "startstr": "Sat Mar 26 17:19:23 2022",
+        "version": "7.92",
+        "xmloutputversion": "1.05"
+    },
+    "runtime": {
+        "time": "1648311565",
+        "timestr": "Sat Mar 26 17:19:25 2022",
+        "summary": "Nmap done at Sat Mar 26 17:19:25 2022; 1 IP address (0 hosts up) scanned in 1.75 seconds",
+        "elapsed": "1.75",
+        "exit": "success"
+    }
+}

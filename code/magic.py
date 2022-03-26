@@ -1,5 +1,7 @@
+from ast import Delete
 from asyncio.windows_events import NULL
 import re
+from tkinter import E
 from ciscoconfparse import CiscoConfParse
 import json
 import nmap3
@@ -8,8 +10,17 @@ import pprint
 from openpyxl import Workbook
 from napalm import get_network_driver
 import os
-
 from types import SimpleNamespace
+from pathlib import Path
+from datetime import datetime
+import ipaddress
+from pssh.clients import ParallelSSHClient
+from pssh.config import HostConfig
+
+
+
+import vlc
+
 
 #Def Functions
 def FetchNmapData(ipAddress):
@@ -22,40 +33,42 @@ def CreateNapalmConnection(ipAddress, driver, sshUserName, sshPassword):
 
     #NapalmConnection
     driver = get_network_driver(driver)
-
     device = driver(ipAddress, sshUserName, sshPassword)
-    
-    device.open() 
-    
+    device.open()
+
     return device
 
-def ResolveDriver(ipAddress, sshUserName, sshPassword, defaultDriver):
 
+def ResolveDriver(ipAddressess, sshUserName, sshPassword):
 
-    if defaultDriver == "HuaweiVrp5" or defaultDriver == "HuaweiVrp8":
-        try:
-            connection = CreateNapalmConnection(ipAddress, "huawei_vrp", sshUserName, sshPassword)
-            displayVersion = connection.cli(["display version"])
+    #if defaultDriver == "HuaweiVrp5" or defaultDriver == "HuaweiVrp8":
+        
+    #connection = CreateNapalmConnection(ipAddress, "huawei_vrp", sshUserName, sshPassword)
             
-            print(displayVersion)
+    output = client.run_command('display version')
 
-            print(displayVersion['display version'])
+    for host_out in output:
+        for line in host_out.stdout:
+            print(line)
 
-            if 'Software, Version 5' in displayVersion['display version']:
-                return (connection, "HuaweiVrp5")
-            elif 'Software, Version 8' in displayVersion['display version']:
-                return (CreateNapalmConnection(ipAddress, "ce", sshUserName, sshPassword), "HuaweiVrp8")
-         
-        except Exception as e:
-            try:
-                return (CreateNapalmConnection(ipAddress, "ios", sshUserName, sshPassword), "IOS")                          
-            except Exception as e:
-                print("Not huawei or Cisco Device. Quiting ...", e)
+            if "Cisco IOS Software," in line:
+                driver = "ios"
+                break
+
+            if "VRP (R) software," in line:
+                driver = "huaweiVrp" + line.partition("Version ")[2][0]
+                break
+
+            if "SW version    " in line:
+                driver = "ios"
+                break
+
+    print(driver)
+
 
 def CreateWorksheet(workBook, workSheetName, dataCollection):
 
     workSheet = workBook.create_sheet(workSheetName)
-
     workSheet.append(list(dataCollection[0].keys()))
 
     for data in dataCollection:
@@ -65,22 +78,18 @@ def ConvertDictInDictToDictInList(dataDictDict, newColumnName):
 
     #vytahneme klice
     keys = list(dataDictDict.keys())
-
     listDict = []
 
     for key in keys:
         
         #ke klicum ve sloupci prilepime hodnoty
         dataDict = { newColumnName: key}
-
         #tady se prilepi hodnoty ke klici (jako tx errors)
         dataDict.update(dataDictDict[key])
 
         listDict.append(dataDict)
 
     return listDict
-
-
 
 
 def SaveDeviceDataAsWorkbook(deviceData, path):
@@ -97,6 +106,7 @@ def SaveDeviceDataAsWorkbook(deviceData, path):
     CreateWorksheet(workBook, "interfacesCounter", interfaceCountersData)
 
     del workBook['Sheet']
+
     workBook.save(path)
 
 
@@ -106,46 +116,82 @@ def SaveDeviceConfigFile(deviceConfig, path):
     deviceConfigFile.close()
 
 
-    # if vendor == "HuaweiVrp5": return "huawei_vrp"
-
-    # elif vendor == "HuaweiVrp8": return "ce"
-
-    # elif vendor == "CiscoIos": return "ios"
-
-    # elif vendor == "": return NULL
-
     # else: raise Exception(f"Invalid configuration - operating system {vendor} is not supported.")
 
-
-
-#Read Config file and gather variables
+#FETCHING CONFIG and gather variables
 config = configparser.ConfigParser()
 config.read('config.conf')
 print(config.sections())
 print(config["Targets"]["IpAddresessToScan"])
 
-ipAddresessToScan = config["Targets"]["IpAddresessToScan"].split(",")
-networksToScan = config["Targets"]["NetworksToScan"].split(",")
+ipAddresessFromConfig = config["Targets"]["IpAddresessToScan"].split(",")
+networkFromConfig = config["Targets"]["NetworksToScan"].split(",")
+UseJsonFileWithTargets = config["Targets"]["UseJsonFileWith"]
 
+timeoutFromConfig = config["Targets"]["Timeout"]
+
+#Credentials
 sshUserName = config["Credentials"]["SshUserName"]
 sshPassword = config["Credentials"]["SshPassword"]
 
-defaultDriver = config["Targets"]["DefaultDriver"]
 
-jsonNmapRaw = config["Outputs"]["JsonNmapRawOutput"]
+SnmpCommunityName = config["Credentials"]["SnmpCommunityName"]
+
+deviceConfigurationSave = config["Outputs"]["DeviceConfigurationSave"]
+
+jsonNmapRaw = config["Outputs"]["JsonNmapRaw"]
+
+vlanTables = config["Outputs"]["VlanTables"]
+macTable = config["Outputs"]["MacTable"]
+arpTables = config["Outputs"]["ArpTables"]
+
+lldpPNeigbors = config["Outputs"]["LldpPNeigbors"]
+
+#InterfaceOptions
+interfaceTables = config["Outputs"]["InterfaceTables"]
+interfaceCountersTables = config["Outputs"]["InterfaceCountersTables"]
+interfacesIp = config["Outputs"]["InterfacesIp"]
+
+#FETCHING CONFIG
+
+parallelHostConfigs = []
+parallelConfig = []
+
+if UseJsonFileWithTargets: pass #Import Json data to ipAddresessToScan
+
+else:
+    if not ipAddresessFromConfig and networkFromConfig: ipAddresessToScan = ipaddress.IPv4Network(networkFromConfig)
+    elif ipAddresessFromConfig and not networkFromConfig: ipAddresessToScan = ipAddresessFromConfig
+    else: raise Exception("RTFM !!!")
+
+    for ip in ipAddresessToScan:
+        parallelHostConfigs.append(HostConfig(user=sshUserName, password=sshPassword, timeout=timeoutFromConfig))
+        #ipAddresessToScan, user='my_user', password='my_pass', timeout=timeoutFromConfig
+
+
+
+
+clients = ParallelSSHClient(ipAddresessToScan, host_config=parallelHostConfigs)
+outputs = clients.run_command('display version')
+
+
+
 
 
 nmapResults = {}
 deviceType = ""
 
+
+#Testing
+useTestingData=True
+#Testing
+
 for ip in ipAddresessToScan:
 
-    
-    #snazat
-    deviceData = json.loads(open("./outputs/susenky.json",'r').read())
-    
-    #zprovoznit
-    if not False and not True and not False or not True and not not not not not False:
+    #TESTING DATA
+    if useTestingData: deviceData = json.loads(open("./testDataHuawei.json",'r').read())
+
+    else:
         connectionVariables = ResolveDriver(ip, sshUserName, sshPassword, defaultDriver)
 
         connection = connectionVariables[0]
@@ -174,43 +220,37 @@ for ip in ipAddresessToScan:
             deviceData["deviceUsers"] = connection.get_device_users()
             deviceData["blaBla"] = 'blabla'
 
-    deviceOutputFolderPath = "./outputs/devices/" + ip.replace(".", "_")
-    try:
-        os.mkdir(deviceOutputFolderPath)
-    except:
-        pass
 
-    #creates device data persistence layer
-    #nmapRawJson = open("./outputs/susenky.json", "w",encoding='utf8')
-    #nmapRawJson.write(json.dumps(deviceData.__dict__, indent=4))
+
+    #Create Device Folder if not exists
+    deviceOutputFolderPath = "./outputs/devices/" + ip.replace(".", "_")
+    if not os.path.exists(deviceOutputFolderPath):
+        os.mkdir(deviceOutputFolderPath)
+
+    #NMAP
+    nmapResult = FetchNmapData(ip)
+    nmapResults.update(nmapResult)
+
+    if jsonNmapRaw:
+        nmapRawJson = open(deviceOutputFolderPath + "/nmapRaw.json", "w", encoding='utf8')
+        nmapRawJson.write(json.dumps(nmapResults, indent=4))
+        nmapRawJson.close()
+    #NMAP_END
+
+
 
     SaveDeviceConfigFile(deviceData["deviceConfig"], deviceOutputFolderPath + "/config.txt")
-    
     SaveDeviceDataAsWorkbook(deviceData, deviceOutputFolderPath + "/deviceInfo.xlsx")
 
-
-
-    
-    nmapResultDict = FetchNmapData(ip)
-    
-    nmapResults.update(nmapResultDict)
-
-    nmapResult = nmapResultDict[ip]
 
 
     #type = ReturnResolvedDeviceOs(nmapResults[ip]["macaddress"]["vendor"])
 
 
     #device = CreateNapalmConnection(ip, vendor, sshUserName, sshPassword)
-
-
     
 
 
-if jsonNmapRaw:
-    nmapRawJson = open("./outputs/nmapRAW.json", "w",encoding='utf8')
-    nmapRawJson.write(json.dumps(nmapResults, indent=4))
-    nmapRawJson.close()
 
 
 
@@ -218,4 +258,7 @@ if jsonNmapRaw:
 
 
 
+#ENDE
 print("Capo ti tuti capi ende slus !!!")
+
+os.system("capo.mp3")
