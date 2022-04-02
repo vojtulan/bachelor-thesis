@@ -1,12 +1,7 @@
-from ast import Delete
-from asyncio.windows_events import NULL
-import re
-from tkinter import E
 from ciscoconfparse import CiscoConfParse
-import json
 import nmap3
+import json
 import configparser
-import pprint
 from openpyxl import Workbook
 from napalm import get_network_driver
 import os
@@ -14,13 +9,10 @@ from types import SimpleNamespace
 from pathlib import Path
 from datetime import datetime
 import ipaddress
-from pssh.clients import ParallelSSHClient
-from pssh.config import HostConfig
-
-
-
-import vlc
-
+import traceback
+import concurrent.futures
+from netmiko.ssh_autodetect import SSHDetect
+from netmiko.ssh_dispatcher import ConnectHandler
 
 #Def Functions
 def FetchNmapData(ipAddress):
@@ -38,35 +30,89 @@ def CreateNapalmConnection(ipAddress, driver, sshUserName, sshPassword):
 
     return device
 
+def DeviceInfoFetchPipeline(ipAddress, username, password, timeout):
 
-def ResolveDriver(ipAddressess, sshUserName, sshPassword):
+    napalmDriverName = None
 
-    #if defaultDriver == "HuaweiVrp5" or defaultDriver == "HuaweiVrp8":
+    remote_device = {
+        'device_type': 'autodetect',
+        'host': ipAddress,
+        'username': username,
+        'password': password }
+
+    guesser = SSHDetect(**remote_device)
+    bestMatch = guesser.autodetect()
+
+    #print(bestMatch) # Name of the best device_type to use further
+    #print(guesser.potential_matches) # Dictionary of the whole matching result
+
+    if bestMatch == None:
+        remote_device['device_type'] = "cisco_s300"
+        connection = ConnectHandler(**remote_device)
+
+        commandOutput = connection.send_command('show version', expect_string="#")
+
+        if "SW version    " in commandOutput:
+            napalmDriverName = "s350"
+
+        else: raise Exception("Unrecognized Device. Tried to resolve device as Cisco SMB!")
+
+
+    elif "huawei" in bestMatch:
+        remote_device['device_type'] = bestMatch
+        connection = ConnectHandler(**remote_device)
         
-    #connection = CreateNapalmConnection(ipAddress, "huawei_vrp", sshUserName, sshPassword)
+        commandOutput = connection.send_command('display version')
+
+        if "VRP (R) software," in commandOutput:
             
-    output = client.run_command('display version')
 
-    for host_out in output:
-        for line in host_out.stdout:
-            print(line)
+            vrpVersion = str(commandOutput.partition("Version ")[2][0])
+            
+            if vrpVersion == "5": napalmDriverName = 'huawei_vrp'
+            elif vrpVersion == "8": napalmDriverName = 'ce'
+            else: raise Exception("Unrecognized Device. Tried to resolve device as Huawei Vrp5 & Vrp8!")
 
-            if "Cisco IOS Software," in line:
-                driver = "ios"
-                break
+        if napalmDriverName == None: raise Exception("Unrecognized Device. Tried to resolve device as Huawei Vrp5 & Vrp8!")
 
-            if "VRP (R) software," in line:
-                driver = "huaweiVrp" + line.partition("Version ")[2][0]
-                break
+    elif "cisco" in bestMatch: napalmDriverName = "ios"
 
-            if "SW version    " in line:
-                driver = "ios"
-                break
+    connection = CreateNapalmConnection(ipAddress, napalmDriverName, username, password)
 
-    print(driver)
+    napalmData = {
+       "deviceConfig": str(connection.get_config()["running"]),
+       "arpTable" : connection.get_arp_table(),
+       "interfaces" : connection.get_interfaces(),
+       "interfacesIp" : connection.get_interfaces_ip(),
+       "lldpNeighbors" : connection.get_lldp_neighbors()}
 
+    if not napalmDriverName == 's350':
+        napalmData["macTable"] = connection.get_mac_address_table()
+        napalmData["interfacesCounter"] = connection.get_interfaces_counters()
+        napalmData["deviceUsers"] = connection.get_users()
+
+
+    if napalmDriverName == "huawei_vrp":
+        pass
+
+    if napalmDriverName == "ce":
+        pass
+
+    if napalmDriverName == "ios":
+        pass
+
+    return {
+        'ip': ipAddress,
+        'napalmDriverName': napalmDriverName,
+        'napalmData': napalmData,
+        'nmapData': FetchNmapData(ipAddress)
+    }   
 
 def CreateWorksheet(workBook, workSheetName, dataCollection):
+
+    if not dataCollection:
+        #todo: log
+        return
 
     workSheet = workBook.create_sheet(workSheetName)
     workSheet.append(list(dataCollection[0].keys()))
@@ -76,34 +122,68 @@ def CreateWorksheet(workBook, workSheetName, dataCollection):
     
 def ConvertDictInDictToDictInList(dataDictDict, newColumnName):
 
-    #vytahneme klice
-    keys = list(dataDictDict.keys())
     listDict = []
 
-    for key in keys:
-        
-        #ke klicum ve sloupci prilepime hodnoty
-        dataDict = { newColumnName: key}
-        #tady se prilepi hodnoty ke klici (jako tx errors)
-        dataDict.update(dataDictDict[key])
 
-        listDict.append(dataDict)
+    for key, valueDict in dataDictDict.items():
+
+        #Vytvarime novy dict s key=newColumnName a value=parentKey (GigabitEthernet0/0/3)
+        dict = { newColumnName: key }
+
+        #Appendneme zbytek key value hodnot za nove vytvoreny dict
+        dict.update(valueDict)
+
+        #novy dict hoduime do listu, ktery reprezenetuje 2d tabulku
+        listDict.append(dict)
+
 
     return listDict
 
 
-def SaveDeviceDataAsWorkbook(deviceData, path):
+def SaveDeviceDataAsWorkbook(napalmData, path):
     
     workBook = Workbook()
 
-    CreateWorksheet(workBook, "macTable", deviceData["macTable"])
-    CreateWorksheet(workBook, "arpTable", deviceData["arpTable"])
+    if "macTable" in napalmData:
+        CreateWorksheet(workBook, "macTable", napalmData["macTable"])
 
-    interfacesData = ConvertDictInDictToDictInList(deviceData["interfaces"], "interface")
-    interfaceCountersData = ConvertDictInDictToDictInList(deviceData["interfacesCounter"], "interfacesCounter")
+    if "arpTable" in napalmData:
+        CreateWorksheet(workBook, "arpTable", napalmData["arpTable"])
 
-    CreateWorksheet(workBook, "interfaces", interfacesData)
-    CreateWorksheet(workBook, "interfacesCounter", interfaceCountersData)
+    if "interfaces" in napalmData:
+        interfacesData = ConvertDictInDictToDictInList(napalmData["interfaces"], "interface")
+        CreateWorksheet(workBook, "interfaces", interfacesData)
+    
+    if "interfacesCounter" in napalmData:
+        interfaceCountersData = ConvertDictInDictToDictInList(napalmData["interfacesCounter"], "interfacesCounter")
+        CreateWorksheet(workBook, "interfacesCounter", interfaceCountersData)
+
+    if "lldpNeighbors" in napalmData:
+        lldppNeigbors = ConvertDictInDictToDictInList(napalmData["lldpNeighbors"], "interface")
+
+        CreateWorksheet(workBook, "lldpNeighbors", lldppNeigbors)
+
+    if "interfacesIp" in napalmData:
+        interfacesIp = ConvertDictInDictToDictInList(napalmData["interfacesIp"], "interface")
+        print(interfacesIp)
+
+        interfacesWithIp = []
+
+        for ipInterface in interfacesIp:
+            ipsWithMasks = ''
+
+            for ipAddressDictionary in ConvertDictInDictToDictInList(ipInterface['ipv4'], 'ip'):
+                ipsWithMasks += ipAddressDictionary['ip'] + '/' + str(ipAddressDictionary['prefix_length']) + ", "
+
+            if ipsWithMasks[-2:] == ', ':
+                ipsWithMasks = ipsWithMasks[:-2]
+
+            interfacesWithIp.append({ 
+                'interface': ipInterface['interface'],
+                'ipsWithMasks': ipsWithMasks})
+
+        CreateWorksheet(workBook, "interfacesIp", interfacesWithIp)
+
 
     del workBook['Sheet']
 
@@ -125,8 +205,8 @@ print(config.sections())
 print(config["Targets"]["IpAddresessToScan"])
 
 ipAddresessFromConfig = config["Targets"]["IpAddresessToScan"].split(",")
-networkFromConfig = config["Targets"]["NetworksToScan"].split(",")
-UseJsonFileWithTargets = config["Targets"]["UseJsonFileWith"]
+networkFromConfig = config["Targets"]["NetworkToScan"]
+UseJsonFileWithTargets = config["Targets"].getboolean("UseJsonFileWithTargets")
 
 timeoutFromConfig = config["Targets"]["Timeout"]
 
@@ -154,107 +234,50 @@ interfacesIp = config["Outputs"]["InterfacesIp"]
 
 #FETCHING CONFIG
 
-parallelHostConfigs = []
-parallelConfig = []
+if (networkFromConfig):
+    print(networkFromConfig)
+
+if ipAddresessFromConfig:
+    print(ipAddresessFromConfig)
 
 if UseJsonFileWithTargets: pass #Import Json data to ipAddresessToScan
 
 else:
-    if not ipAddresessFromConfig and networkFromConfig: ipAddresessToScan = ipaddress.IPv4Network(networkFromConfig)
+    if ipAddresessFromConfig and networkFromConfig: ipAddresessToScan = [str(ip) for ip in ipaddress.IPv4Network(networkFromConfig)]
     elif ipAddresessFromConfig and not networkFromConfig: ipAddresessToScan = ipAddresessFromConfig
     else: raise Exception("RTFM !!!")
 
-    for ip in ipAddresessToScan:
-        parallelHostConfigs.append(HostConfig(user=sshUserName, password=sshPassword, timeout=timeoutFromConfig))
-        #ipAddresessToScan, user='my_user', password='my_pass', timeout=timeoutFromConfig
+devicesData = []
+
+# We can use a with statement to ensure threads are cleaned up promptly
+with concurrent.futures.ThreadPoolExecutor(max_workers=256) as executor:
+    # Start the load operations and mark each future with its URL
+    future_to_ipAddressToScan = {executor.submit(DeviceInfoFetchPipeline, ipAddressToScan, sshUserName, sshPassword, 10): ipAddressToScan for ipAddressToScan in ipAddresessToScan}
+
+    for future in concurrent.futures.as_completed(future_to_ipAddressToScan):
+        ipAddressToScan = future_to_ipAddressToScan[future]
+        try:
+            data = future.result()
+            devicesData.append(data)
+                   
+        except Exception as ex:
+            print('%r generated an exception: %s' % (ipAddressToScan, ex))
+            traceback.print_exc()
 
 
 
+for deviceData in devicesData:
 
-clients = ParallelSSHClient(ipAddresessToScan, host_config=parallelHostConfigs)
-outputs = clients.run_command('display version')
-
-
-
-
-
-nmapResults = {}
-deviceType = ""
-
-
-#Testing
-useTestingData=True
-#Testing
-
-for ip in ipAddresessToScan:
-
-    #TESTING DATA
-    if useTestingData: deviceData = json.loads(open("./testDataHuawei.json",'r').read())
-
-    else:
-        connectionVariables = ResolveDriver(ip, sshUserName, sshPassword, defaultDriver)
-
-        connection = connectionVariables[0]
-        connectionOs = connectionVariables[1]
-
-        print(connectionOs)
-
-        deviceData = {
-           "deviceConfig": str(connection.get_config()["running"]),
-           "arpTable" : connection.get_arp_table(),
-           "macTable" : connection.get_mac_address_table(),
-           "interfaces" : connection.get_interfaces(),
-           "interfacesIp" : connection.get_interfaces_ip(),
-           "interfacesCounter" : connection.get_interfaces_counters(),
-           "lldpNeighbors" : connection.get_lldp_neighbors()}
-
-
-        if connectionOs == "HuaweiVrp5":
-           print(deviceData)
-
-
-        elif connectionOs == "HuaweiVrp8":
-           deviceData["deviceUsers"] = connection.get_device_users()
-
-        elif connectionOs == "IOS":
-            deviceData["deviceUsers"] = connection.get_device_users()
-            deviceData["blaBla"] = 'blabla'
-
-
-
-    #Create Device Folder if not exists
-    deviceOutputFolderPath = "./outputs/devices/" + ip.replace(".", "_")
-    if not os.path.exists(deviceOutputFolderPath):
-        os.mkdir(deviceOutputFolderPath)
-
-    #NMAP
-    nmapResult = FetchNmapData(ip)
-    nmapResults.update(nmapResult)
+    deviceOutputFolderPath = "./outputs/devices/" + deviceData["ip"].replace(".", "_")
+    os.makedirs(deviceOutputFolderPath, exist_ok=True)
 
     if jsonNmapRaw:
         nmapRawJson = open(deviceOutputFolderPath + "/nmapRaw.json", "w", encoding='utf8')
-        nmapRawJson.write(json.dumps(nmapResults, indent=4))
+        nmapRawJson.write(json.dumps(deviceData['nmapData'], indent=4))
         nmapRawJson.close()
-    #NMAP_END
 
-
-
-    SaveDeviceConfigFile(deviceData["deviceConfig"], deviceOutputFolderPath + "/config.txt")
-    SaveDeviceDataAsWorkbook(deviceData, deviceOutputFolderPath + "/deviceInfo.xlsx")
-
-
-
-    #type = ReturnResolvedDeviceOs(nmapResults[ip]["macaddress"]["vendor"])
-
-
-    #device = CreateNapalmConnection(ip, vendor, sshUserName, sshPassword)
-    
-
-
-
-
-
-
+    SaveDeviceConfigFile(deviceData["napalmData"]["deviceConfig"], deviceOutputFolderPath + "/config.txt")
+    SaveDeviceDataAsWorkbook(deviceData["napalmData"], deviceOutputFolderPath + "/deviceInfo.xlsx")
 
 
 
@@ -262,3 +285,18 @@ for ip in ipAddresessToScan:
 print("Capo ti tuti capi ende slus !!!")
 
 os.system("capo.mp3")
+
+
+
+
+
+
+# useTestingData=False
+# createTestingData = False
+
+# if useTestingData:
+#         json.loads(open("./testSwitchData.json",'r').read())
+
+# if createTestingData:
+#                 with open("./testSwitchData.json", 'w') as outfile:
+#                     json.dump(deviceData, outfile)
