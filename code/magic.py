@@ -184,7 +184,7 @@ def SaveDeviceDataAsWorkbook(napalmData, path):
 
         CreateWorksheet(workBook, "interfacesIp", interfacesWithIp)
 
-
+    #delete default sheet
     del workBook['Sheet']
 
     workBook.save(path)
@@ -201,9 +201,8 @@ def SaveDeviceConfigFile(deviceConfig, path):
 #FETCHING CONFIG and gather variables
 config = configparser.ConfigParser()
 config.read('config.conf')
-print(config.sections())
-print(config["Targets"]["IpAddresessToScan"])
 
+#Targets
 ipAddresessFromConfig = config["Targets"]["IpAddresessToScan"].split(",")
 networkFromConfig = config["Targets"]["NetworkToScan"]
 UseJsonFileWithTargets = config["Targets"].getboolean("UseJsonFileWithTargets")
@@ -215,10 +214,8 @@ sshUserName = config["Credentials"]["SshUserName"]
 sshPassword = config["Credentials"]["SshPassword"]
 
 
-SnmpCommunityName = config["Credentials"]["SnmpCommunityName"]
-
+snmpCommunityName = config["Credentials"]["SnmpCommunityName"]
 deviceConfigurationSave = config["Outputs"]["DeviceConfigurationSave"]
-
 jsonNmapRaw = config["Outputs"]["JsonNmapRaw"]
 
 vlanTables = config["Outputs"]["VlanTables"]
@@ -231,6 +228,7 @@ lldpPNeigbors = config["Outputs"]["LldpPNeigbors"]
 interfaceTables = config["Outputs"]["InterfaceTables"]
 interfaceCountersTables = config["Outputs"]["InterfaceCountersTables"]
 interfacesIp = config["Outputs"]["InterfacesIp"]
+
 
 #FETCHING CONFIG
 
@@ -249,10 +247,11 @@ else:
 
 devicesData = []
 
-# We can use a with statement to ensure threads are cleaned up promptly
+
+#Async Block with 256 threads
 with concurrent.futures.ThreadPoolExecutor(max_workers=256) as executor:
-    # Start the load operations and mark each future with its URL
-    future_to_ipAddressToScan = {executor.submit(DeviceInfoFetchPipeline, ipAddressToScan, sshUserName, sshPassword, 10): ipAddressToScan for ipAddressToScan in ipAddresessToScan}
+
+    future_to_ipAddressToScan = {executor.submit(DeviceInfoFetchPipeline, ipAddressToScan, sshUserName, sshPassword, int(timeoutFromConfig)): ipAddressToScan for ipAddressToScan in ipAddresessToScan}
 
     for future in concurrent.futures.as_completed(future_to_ipAddressToScan):
         ipAddressToScan = future_to_ipAddressToScan[future]
