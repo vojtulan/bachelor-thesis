@@ -1,8 +1,8 @@
 # bachelor-thesis
 Features to implement:
 
-Zkouska defaultnich useru a hesel
-Matching blocku konfigurace specifikovanych uzivatelem
+* Zkouska defaultnich useru a hesel
+* Matching blocku konfigurace specifikovanych uzivatelem
 Best Practise – 8021x, SSH, NTP, STP, OS verze …
 Log file
 display mac-address total-number vlan all (Mac per vlan)
