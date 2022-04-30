@@ -1,2 +1,2 @@
 # bachelor-thesis
-TEST
+Features to implement:
