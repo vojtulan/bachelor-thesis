@@ -43,6 +43,7 @@ def CreateNapalmConnection(ipAddress, driver, sshUserName, sshPassword):
 
     return device
 
+
 def DeviceInfoFetchPipeline(ipAddress, username, password, timeout):
 
     swVersion = "unresolved"
@@ -57,7 +58,7 @@ def DeviceInfoFetchPipeline(ipAddress, username, password, timeout):
         'password': password }
 
     guesser = SSHDetect(**remote_device)
-    bestMatch = guesser.autodetect()
+    bestMatch = guesser.autodetect() # TODO: rename bestMatch argument
 
     #print(bestMatch) # Name of the best device_type to use further
     #print(guesser.potential_matches) # Dictionary of the whole matching result
@@ -85,8 +86,6 @@ def DeviceInfoFetchPipeline(ipAddress, username, password, timeout):
         commandOutput = connection.send_command('display version')
 
         if "VRP (R) software," in commandOutput:
-            
-
             vrpVersion = str(commandOutput.partition("Version ")[2][0])
             
             if vrpVersion == "5": napalmDriverName = 'huawei_vrp'
@@ -102,19 +101,53 @@ def DeviceInfoFetchPipeline(ipAddress, username, password, timeout):
 
     elif "cisco" in bestMatch: napalmDriverName = "ios"
 
+
+
+    #TODO: Try default passwords
+        
+
+
+    #Fetch info through Napalm
     connection = CreateNapalmConnection(ipAddress, napalmDriverName, username, password)
+
+    interfacesIp = ConvertDictInDictToDictInList(connection.get_interfaces_ip(), "interface")
+
+    interfacesWithIp = []
+
+    for ipInterface in interfacesIp:
+        ipsWithMasks = ''
+
+        for ipAddressDictionary in ConvertDictInDictToDictInList(ipInterface['ipv4'], 'ip'):
+            ipsWithMasks += ipAddressDictionary['ip'] + '/' + str(ipAddressDictionary['prefix_length']) + ", "
+
+        if ipsWithMasks[-2:] == ', ':
+            ipsWithMasks = ipsWithMasks[:-2]
+
+        interfacesWithIp.append({ 
+            'interface': ipInterface['interface'],
+            'ipsWithMasks': ipsWithMasks})
+
+
+    lldpNeighbors = []
+
+    for key, value in connection.get_lldp_neighbors().items():
+
+        lldpNeighbors.append({
+            "localInterface": key,
+            "neighborInterface": value[0]["port"],
+            "neigborHostname": value[0]["hostname"]})
 
     # compatibility matrix switch
     napalmData = {
        "deviceConfig": str(connection.get_config()["running"]),
        "arpTable" : connection.get_arp_table(),
-       "interfaces" : connection.get_interfaces(),
-       "interfacesIp" : connection.get_interfaces_ip(),
-       "lldpNeighbors" : connection.get_lldp_neighbors()}
+       "interfaces" : ConvertDictInDictToDictInList(connection.get_interfaces(), "interface"),
+       "interfacesIp" : interfacesWithIp,
+       "lldpNeighbors" : lldpNeighbors}
 
     if not napalmDriverName == 's350':
         napalmData["macTable"] = connection.get_mac_address_table()
-        napalmData["interfacesCounter"] = connection.get_interfaces_counters()
+        napalmData["interfacesCounter"] = ConvertDictInDictToDictInList(connection.get_interfaces_counters(), "interfaceinterfacesCounter")
         napalmData["deviceUsers"] = connection.get_users()
 
 
@@ -137,6 +170,8 @@ def DeviceInfoFetchPipeline(ipAddress, username, password, timeout):
 
 # TODO: Remove column feature for is_enabled in interfaces
 # TODO: Ensure order of columns
+
+
 def CreateWorksheet(workBook, workSheetName, dataCollection):
 
     if not dataCollection:
@@ -180,38 +215,16 @@ def SaveDeviceDataAsWorkbook(napalmData, path):
         CreateWorksheet(workBook, "arpTable", napalmData["arpTable"])
 
     if "interfaces" in napalmData:
-        interfacesData = ConvertDictInDictToDictInList(napalmData["interfaces"], "interface")
-        CreateWorksheet(workBook, "interfaces", interfacesData)
+        CreateWorksheet(workBook, "interfaces", napalmData["interfaces"])
     
     if "interfacesCounter" in napalmData:
-        interfaceCountersData = ConvertDictInDictToDictInList(napalmData["interfacesCounter"], "interfacesCounter")
-        CreateWorksheet(workBook, "interfacesCounter", interfaceCountersData)
+        CreateWorksheet(workBook, "interfacesCounter", napalmData["interfacesCounter"])
 
     if "lldpNeighbors" in napalmData:
-        lldppNeigbors = ConvertDictInDictToDictInList(napalmData["lldpNeighbors"], "interface")
-
-        CreateWorksheet(workBook, "lldpNeighbors", lldppNeigbors)
+        CreateWorksheet(workBook, "lldpNeighbors", napalmData["lldpNeighbors"])
 
     if "interfacesIp" in napalmData:
-        interfacesIp = ConvertDictInDictToDictInList(napalmData["interfacesIp"], "interface")
-        print(interfacesIp)
-
-        interfacesWithIp = []
-
-        for ipInterface in interfacesIp:
-            ipsWithMasks = ''
-
-            for ipAddressDictionary in ConvertDictInDictToDictInList(ipInterface['ipv4'], 'ip'):
-                ipsWithMasks += ipAddressDictionary['ip'] + '/' + str(ipAddressDictionary['prefix_length']) + ", "
-
-            if ipsWithMasks[-2:] == ', ':
-                ipsWithMasks = ipsWithMasks[:-2]
-
-            interfacesWithIp.append({ 
-                'interface': ipInterface['interface'],
-                'ipsWithMasks': ipsWithMasks})
-
-        CreateWorksheet(workBook, "interfacesIp", interfacesWithIp)
+        CreateWorksheet(workBook, "interfacesIp", napalmData["interfacesIp"])
 
     #delete default sheet
     del workBook['Sheet']
@@ -275,7 +288,7 @@ else:
     elif ipAddresessFromConfig and not networkFromConfig: ipAddresessToScan = ipAddresessFromConfig
     else: raise Exception("RTFM !!!")
 
-
+allDeviceData = []
 
 #Async Block with 256 threads
 with concurrent.futures.ThreadPoolExecutor(max_workers=256) as executor:
@@ -297,19 +310,29 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=256) as executor:
                 nmapRawJson = open(deviceOutputFolderPath + "/nmapRaw.json", "w", encoding='utf8')
                 nmapRawJson.write(json.dumps(deviceData['nmapData'], indent=4))
                 nmapRawJson.close()
+                deviceData["nmap"] = jsonNmapRaw
+
+            allDeviceData.append(deviceData) # can create custom json list file to reduce RAM usage
 
             SaveDeviceConfigFile(deviceData["napalmData"]["deviceConfig"], deviceOutputFolderPath + "/config.txt")
             SaveDeviceDataAsWorkbook(deviceData["napalmData"], deviceOutputFolderPath + "/deviceInfo.xlsx")
+
+            
+
+            
                    
         except Exception as ex:
             logging.error(f'{ipAddressToScan} generated an exception: {ex}')
             logging.error(traceback.format_exc())
 
+out_file = open("./outputs/allDeviceData.json", "w") 
+json.dump(allDeviceData, out_file)
+out_file.close()
 
 #ENDE
 print("Capo ti tuti capi ende slus !!!")
 
-os.system("capo.mp3")
+#os.system("capo.mp3")
 
 
 
