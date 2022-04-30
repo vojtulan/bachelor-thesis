@@ -200,13 +200,14 @@ def SaveDeviceConfigFile(deviceConfig, path):
 
 #FETCHING CONFIG and gather variables
 config = configparser.ConfigParser()
-config.read('config.conf')
+config.read('./config.conf')
 
 #Targets
 ipAddresessFromConfig = config["Targets"]["IpAddresessToScan"].split(",")
 networkFromConfig = config["Targets"]["NetworkToScan"]
 UseJsonFileWithTargets = config["Targets"].getboolean("UseJsonFileWithTargets")
 
+#Timeout for ssh connection
 timeoutFromConfig = config["Targets"]["Timeout"]
 
 #Credentials
