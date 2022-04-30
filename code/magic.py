@@ -13,6 +13,19 @@ import traceback
 import concurrent.futures
 from netmiko.ssh_autodetect import SSHDetect
 from netmiko.ssh_dispatcher import ConnectHandler
+import re
+import logging
+
+
+# TODO: Dump Device Data to json file for each device, generate tables using structured json data, move nmap
+
+
+os.makedirs("./outputs/", exist_ok=True)
+
+# TODO: If needed, open previous log file if exists and create append log
+
+logging.basicConfig(filename='./outputs/log.txt', level=logging.WARNING, filemode='w' )
+
 
 #Def Functions
 def FetchNmapData(ipAddress):
@@ -31,6 +44,9 @@ def CreateNapalmConnection(ipAddress, driver, sshUserName, sshPassword):
     return device
 
 def DeviceInfoFetchPipeline(ipAddress, username, password, timeout):
+
+    swVersion = "unresolved"
+    swVersionRegex = "\d+(?:\.\d+)+"
 
     napalmDriverName = None
 
@@ -52,11 +68,15 @@ def DeviceInfoFetchPipeline(ipAddress, username, password, timeout):
 
         commandOutput = connection.send_command('show version', expect_string="#")
 
-        if "SW version    " in commandOutput:
-            napalmDriverName = "s350"
+        regexVersionMatches = re.findall(swVersionRegex, commandOutput)
 
-        else: raise Exception("Unrecognized Device. Tried to resolve device as Cisco SMB!")
+        if regexVersionMatches: napalmDriverName = 's350'
 
+        else: raise Exception(f'Unrecognized Device. Tried to resolve device as Cisco SMB! Show version command output: {commandOutput}, regexVersionMatches: {regexVersionMatches}')
+
+        swVersion = regexVersionMatches[0]
+
+        logging.warning(swVersion)
 
     elif "huawei" in bestMatch:
         remote_device['device_type'] = bestMatch
@@ -75,10 +95,16 @@ def DeviceInfoFetchPipeline(ipAddress, username, password, timeout):
 
         if napalmDriverName == None: raise Exception("Unrecognized Device. Tried to resolve device as Huawei Vrp5 & Vrp8!")
 
+        regexVersionMatches = re.findall(swVersionRegex, commandOutput)
+
+        if regexVersionMatches: swVersion = regexVersionMatches[0]
+
+
     elif "cisco" in bestMatch: napalmDriverName = "ios"
 
     connection = CreateNapalmConnection(ipAddress, napalmDriverName, username, password)
 
+    # compatibility matrix switch
     napalmData = {
        "deviceConfig": str(connection.get_config()["running"]),
        "arpTable" : connection.get_arp_table(),
@@ -105,9 +131,12 @@ def DeviceInfoFetchPipeline(ipAddress, username, password, timeout):
         'ip': ipAddress,
         'napalmDriverName': napalmDriverName,
         'napalmData': napalmData,
-        'nmapData': FetchNmapData(ipAddress)
+        'nmapData': FetchNmapData(ipAddress),
+        'swVersion': swVersion
     }   
 
+# TODO: Remove column feature for is_enabled in interfaces
+# TODO: Ensure order of columns
 def CreateWorksheet(workBook, workSheetName, dataCollection):
 
     if not dataCollection:
@@ -247,7 +276,6 @@ else:
     elif ipAddresessFromConfig and not networkFromConfig: ipAddresessToScan = ipAddresessFromConfig
     else: raise Exception("RTFM !!!")
 
-devicesData = []
 
 # We can use a with statement to ensure threads are cleaned up promptly
 with concurrent.futures.ThreadPoolExecutor(max_workers=256) as executor:
@@ -255,37 +283,33 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=256) as executor:
     future_to_ipAddressToScan = {executor.submit(DeviceInfoFetchPipeline, ipAddressToScan, sshUserName, sshPassword, 10): ipAddressToScan for ipAddressToScan in ipAddresessToScan}
 
     for future in concurrent.futures.as_completed(future_to_ipAddressToScan):
+
         ipAddressToScan = future_to_ipAddressToScan[future]
+
         try:
-            data = future.result()
-            devicesData.append(data)
+            deviceData = future.result()
+
+            deviceOutputFolderPath = "./outputs/devices/" + deviceData["ip"].replace(".", "_")
+
+            os.makedirs(deviceOutputFolderPath, exist_ok=True)
+
+            if jsonNmapRaw:
+                nmapRawJson = open(deviceOutputFolderPath + "/nmapRaw.json", "w", encoding='utf8')
+                nmapRawJson.write(json.dumps(deviceData['nmapData'], indent=4))
+                nmapRawJson.close()
+
+            SaveDeviceConfigFile(deviceData["napalmData"]["deviceConfig"], deviceOutputFolderPath + "/config.txt")
+            SaveDeviceDataAsWorkbook(deviceData["napalmData"], deviceOutputFolderPath + "/deviceInfo.xlsx")
                    
         except Exception as ex:
-            print('%r generated an exception: %s' % (ipAddressToScan, ex))
-            traceback.print_exc()
-
-
-
-for deviceData in devicesData:
-
-    deviceOutputFolderPath = "./outputs/devices/" + deviceData["ip"].replace(".", "_")
-    os.makedirs(deviceOutputFolderPath, exist_ok=True)
-
-    if jsonNmapRaw:
-        nmapRawJson = open(deviceOutputFolderPath + "/nmapRaw.json", "w", encoding='utf8')
-        nmapRawJson.write(json.dumps(deviceData['nmapData'], indent=4))
-        nmapRawJson.close()
-
-    SaveDeviceConfigFile(deviceData["napalmData"]["deviceConfig"], deviceOutputFolderPath + "/config.txt")
-    SaveDeviceDataAsWorkbook(deviceData["napalmData"], deviceOutputFolderPath + "/deviceInfo.xlsx")
-
+            logging.error(f'{ipAddressToScan} generated an exception: {ex}')
+            logging.error(traceback.format_exc())
 
 
 #ENDE
 print("Capo ti tuti capi ende slus !!!")
 
 os.system("capo.mp3")
-
 
 
 
