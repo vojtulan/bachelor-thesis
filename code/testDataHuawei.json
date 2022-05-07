@@ -723,5 +723,134 @@
             "rx_broadcast_packets": 0
         }
     },
-    "lldpNeighbors": {}
+    "lldpNeighbors": {
+        "10GE1/0/2": [{
+            "port": "gi27",
+            "hostname": "sg300-bd-1"
+        }],
+        "10GE1/0/5": [{
+            "port": "10GE1/0/48",
+            "hostname": "ce6800_ar"
+        }],
+        "10GE1/0/6": [{
+            "port": "te1/1",
+            "hostname": "sg500x-g313"
+        }],
+        "10GE1/0/11": [{
+            "port": "Te1/0/1",
+            "hostname": "SK1-SW1"
+        }],
+        "10GE1/0/13": [{
+            "port": "Te1/1/4",
+            "hostname": "c3850_RK14.net.czech-tv.cz"
+        }],
+        "10GE1/0/14": [{
+            "port": "Te3/1/4",
+            "hostname": "c3850_ag.net.czech-tv.cz"
+        }],
+        "10GE1/0/17": [{
+            "port": "Te1/1/6",
+            "hostname": "c4500_10p.net.czech-tv.cz"
+        }],
+        "10GE1/0/18": [{
+            "port": "Eth1/34",
+            "hostname": "pr-mng-nexus-1"
+        }],
+        "10GE1/0/21": [{
+            "port": "Te1/1/4",
+            "hostname": "c3850_sr2.net.czech-tv.cz"
+        }],
+        "10GE1/0/23": [{
+            "port": "e443-4b9a-6730",
+            "hostname": "10GE1/0/24"
+        }],
+        "10GE1/0/35": [{
+            "port": "bc97-e1b2-574a",
+            "hostname": "Broadcom"
+        }],
+        "10GE1/0/36": [{
+            "port": "bc97-e1b2-6ed8",
+            "hostname": "Broadcom"
+        }],
+        "10GE2/0/1": [{
+            "port": "Gi0/48",
+            "hostname": "c2960_ar_1.net.czech-tv.cz"
+        }],
+        "10GE2/0/18": [{
+            "port": "Eth1/34",
+            "hostname": "pr-mng-nexus-2"
+        }],
+        "10GE2/0/23": [{
+            "port": "e443-4b9a-6732",
+            "hostname": "10GE2/0/24"
+        }],
+        "10GE2/0/35": [{
+            "port": "bc97-e1b2-574b",
+            "hostname": "Broadcom"
+        }],
+        "10GE2/0/36": [{
+            "port": "bc97-e1b2-6ed9",
+            "hostname": "Broadcom"
+        }],
+        "10GE3/0/5": [{
+            "port": "10GE2/0/48",
+            "hostname": "ce6800_ar"
+        }],
+        "10GE3/0/13": [{
+            "port": "Te2/1/4",
+            "hostname": "c3850_RK14.net.czech-tv.cz"
+        }],
+        "10GE3/0/14": [{
+            "port": "Te1/1/4",
+            "hostname": "c3850_ag.net.czech-tv.cz"
+        }],
+        "10GE3/0/17": [{
+            "port": "Te2/1/6",
+            "hostname": "c4500_10p.net.czech-tv.cz"
+        }],
+        "10GE3/0/21": [{
+            "port": "Te2/1/4",
+            "hostname": "c3850_sr2.net.czech-tv.cz"
+        }],
+        "10GE3/0/47": [{
+            "port": "10GE3/0/47",
+            "hostname": "ce6800_kh"
+        }],
+        "10GE3/0/48": [{
+            "port": "f4e9-d4ce-78e0",
+            "hostname": "40GE1/0/1"
+        }],
+        "40GE1/0/5": [{
+            "port": "40GE3/0/5",
+            "hostname": "ce6800_kh"
+        }],
+        "40GE1/0/6": [{
+            "port": "40GE2/0/6",
+            "hostname": "ce6800_kh"
+        }],
+        "40GE2/0/4": [{
+            "port": "40GE3/0/6",
+            "hostname": "ce6800_kh"
+        }],
+        "40GE2/0/6": [{
+            "port": "40GE1/0/6",
+            "hostname": "ce6800_kh"
+        }],
+        "40GE3/0/1": [{
+            "port": "100GE1/0/10",
+            "hostname": "CE8800_KH_10p"
+        }],
+        "40GE3/0/5": [{
+            "port": "40GE1/0/5",
+            "hostname": "ce6800_kh"
+        }],
+        "40GE3/0/6": [{
+            "port": "40GE2/0/4",
+            "hostname": "ce6800_kh"
+        }],
+        "MEth0/0/0": [{
+            "port": "2",
+            "hostname": "dlink_mgmt_10p"
+        }]
+    }
 }
