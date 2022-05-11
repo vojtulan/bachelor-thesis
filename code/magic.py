@@ -4,6 +4,7 @@ import json
 import configparser
 from openpyxl import Workbook
 from napalm import get_network_driver
+import sys
 import os
 from types import SimpleNamespace
 from pathlib import Path
@@ -24,10 +25,28 @@ os.makedirs("./outputs/", exist_ok=True)
 
 # TODO: If needed, open previous log file if exists and create append log
 
-logging.basicConfig(filename='./outputs/log.txt', level=logging.WARNING, filemode='w' )
+logging.basicConfig(filename='./outputs/log.txt', level=logging.WARNING, filemode='w', format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
 
 
 #Def Functions
+def DataFetchSafeHandler(dataFetchFunction, remoteDevice):
+    try:
+        return dataFetchFunction()
+
+    except Exception as ex:
+        swVersion = "Unknown"
+
+        if "swVersion" in remoteDevice:
+            swVersion = remoteDevice["swVersion"]
+
+        errorMessage = f"Failed to fetch info for device with ip {remoteDevice['host']}, deviceType: {remoteDevice['device_type']} and software version: {swVersion}."
+        print(errorMessage)
+        logging.error(errorMessage)
+        logging.error(traceback.format_exc())
+        return None
+
+
 def FetchNmapData(ipAddress):
 
     nmap = nmap3.Nmap()
@@ -47,56 +66,55 @@ def CreateNapalmConnection(ipAddress, driver, sshUserName, sshPassword):
 def DeviceInfoFetchPipeline(ipAddress, username, password, timeout):
 
     swVersion = "unresolved"
-    swVersionRegex = "\d+(?:\.\d+)+"
 
     napalmDriverName = None
 
-    remote_device = {
+    remoteDevice = {
         'device_type': 'autodetect',
         'host': ipAddress,
         'username': username,
         'password': password }
 
-    guesser = SSHDetect(**remote_device)
+    guesser = SSHDetect(**remoteDevice)
     bestMatch = guesser.autodetect() # TODO: rename bestMatch argument
 
     #print(bestMatch) # Name of the best device_type to use further
     #print(guesser.potential_matches) # Dictionary of the whole matching result
 
     if bestMatch == None:
-        remote_device['device_type'] = "cisco_s300"
-        connection = ConnectHandler(**remote_device)
+        remoteDevice['device_type'] = "cisco_s300"
+        connection = ConnectHandler(**remoteDevice)
 
         commandOutput = connection.send_command('show version', expect_string="#")
 
-        regexVersionMatches = re.findall(swVersionRegex, commandOutput)
+        regexVersionMatches = re.findall("\d+(?:\.\d+)+", commandOutput)
 
         if regexVersionMatches: napalmDriverName = 's350'
 
         else: raise Exception(f'Unrecognized Device. Tried to resolve device as Cisco SMB! Show version command output: {commandOutput}, regexVersionMatches: {regexVersionMatches}')
 
-        swVersion = regexVersionMatches[0]
-
-        logging.warning(swVersion)
+        remoteDevice['swVersion'] = regexVersionMatches[0]
 
     elif "huawei" in bestMatch:
-        remote_device['device_type'] = bestMatch
-        connection = ConnectHandler(**remote_device)
+        remoteDevice['device_type'] = bestMatch
+        connection = ConnectHandler(**remoteDevice)
         
         commandOutput = connection.send_command('display version')
 
         if "VRP (R) software," in commandOutput:
             vrpVersion = str(commandOutput.partition("Version ")[2][0])
-            
+
             if vrpVersion == "5": napalmDriverName = 'huawei_vrp'
             elif vrpVersion == "8": napalmDriverName = 'ce'
             else: raise Exception("Unrecognized Device. Tried to resolve device as Huawei Vrp5 & Vrp8!")
 
         if napalmDriverName == None: raise Exception("Unrecognized Device. Tried to resolve device as Huawei Vrp5 & Vrp8!")
 
-        regexVersionMatches = re.findall(swVersionRegex, commandOutput)
+        regexVersionMatches = re.findall("\d+(?:\.\d+)+.*", commandOutput)
 
         if regexVersionMatches: swVersion = regexVersionMatches[0]
+        remoteDevice['swVersion'] = swVersion
+
 
 
     elif "cisco" in bestMatch: napalmDriverName = "ios"
@@ -110,46 +128,53 @@ def DeviceInfoFetchPipeline(ipAddress, username, password, timeout):
     #Fetch info through Napalm
     connection = CreateNapalmConnection(ipAddress, napalmDriverName, username, password)
 
-    interfacesIp = ConvertDictInDictToDictInList(connection.get_interfaces_ip(), "interface")
+    interfacesIp = DataFetchSafeHandler(lambda: ConvertDictInDictToDictInList(connection.get_interfaces_ip(), "interface"), remoteDevice)
 
     interfacesWithIp = []
 
-    for ipInterface in interfacesIp:
-        ipsWithMasks = ''
+    if (interfacesIp):
+        for ipInterface in interfacesIp:
+            ipsWithMasks = ''
 
-        for ipAddressDictionary in ConvertDictInDictToDictInList(ipInterface['ipv4'], 'ip'):
-            ipsWithMasks += ipAddressDictionary['ip'] + '/' + str(ipAddressDictionary['prefix_length']) + ", "
+            for ipAddressDictionary in ConvertDictInDictToDictInList(ipInterface['ipv4'], 'ip'):
+                ipsWithMasks += ipAddressDictionary['ip'] + '/' + str(ipAddressDictionary['prefix_length']) + ", "
 
-        if ipsWithMasks[-2:] == ', ':
-            ipsWithMasks = ipsWithMasks[:-2]
+            if ipsWithMasks[-2:] == ', ':
+                ipsWithMasks = ipsWithMasks[:-2]
 
-        interfacesWithIp.append({ 
-            'interface': ipInterface['interface'],
-            'ipsWithMasks': ipsWithMasks})
+            interfacesWithIp.append({ 
+                'interface': ipInterface['interface'],
+                'ipsWithMasks': ipsWithMasks})
+    else:
+        interfacesWithIp = None
 
+
+    lldpNeighborsNapalmResult = DataFetchSafeHandler(lambda: connection.get_lldp_neighbors().items(), remoteDevice)
 
     lldpNeighbors = []
 
-    for key, value in connection.get_lldp_neighbors().items():
+    if (lldpNeighborsNapalmResult):
+        for key, value in lldpNeighborsNapalmResult:
+            lldpNeighbors.append({
+                "localInterface": key,
+                "neighborInterface": value[0]["port"],
+                "neigborHostname": value[0]["hostname"]})
+    else:
+        lldpNeighbors = None
 
-        lldpNeighbors.append({
-            "localInterface": key,
-            "neighborInterface": value[0]["port"],
-            "neigborHostname": value[0]["hostname"]})
+    # compatibility matrix switch - YAMAN!
 
-    # compatibility matrix switch
     napalmData = {
-       "deviceConfig": str(connection.get_config()["running"]),
-       "arpTable" : connection.get_arp_table(),
-       "interfaces" : ConvertDictInDictToDictInList(connection.get_interfaces(), "interface"),
+       "deviceConfig": DataFetchSafeHandler(lambda: str(connection.get_config()["running"]), remoteDevice),
+       "arpTable" : DataFetchSafeHandler(lambda: connection.get_arp_table(), remoteDevice),
+       "interfaces" : DataFetchSafeHandler(lambda: ConvertDictInDictToDictInList(connection.get_interfaces(), "interface"), remoteDevice),
        "interfacesIp" : interfacesWithIp,
        "lldpNeighbors" : lldpNeighbors}
 
     if not napalmDriverName == 's350':
-        napalmData["macTable"] = connection.get_mac_address_table()
-        napalmData["interfacesCounter"] = ConvertDictInDictToDictInList(connection.get_interfaces_counters(), "interfaceinterfacesCounter")
-        napalmData["deviceUsers"] = connection.get_users()
-
+        napalmData["macTable"] = DataFetchSafeHandler(lambda: connection.get_mac_address_table(), remoteDevice)
+        napalmData["interfacesCounter"] = DataFetchSafeHandler(lambda: ConvertDictInDictToDictInList(connection.get_interfaces_counters(), "interfaceinterfacesCounter"), remoteDevice)
+        napalmData["deviceUsers"] = DataFetchSafeHandler(lambda: connection.get_users(), remoteDevice)
 
     if napalmDriverName == "huawei_vrp":
         pass
@@ -164,13 +189,12 @@ def DeviceInfoFetchPipeline(ipAddress, username, password, timeout):
         'ip': ipAddress,
         'napalmDriverName': napalmDriverName,
         'napalmData': napalmData,
-        'nmapData': FetchNmapData(ipAddress),
+        'nmapData': DataFetchSafeHandler(lambda: FetchNmapData(ipAddress), remoteDevice),
         'swVersion': swVersion
     }   
 
 # TODO: Remove column feature for is_enabled in interfaces
 # TODO: Ensure order of columns
-
 
 def CreateWorksheet(workBook, workSheetName, dataCollection):
 
@@ -245,7 +269,12 @@ config = configparser.ConfigParser()
 config.read('./config.conf')
 
 #Targets
-ipAddresessFromConfig = config["Targets"]["IpAddresessToScan"].split(",")
+ipAddresessFromConfig = config["Targets"]["IpAddresessToScan"]
+if len(ipAddresessFromConfig) != 0:
+    ipAddresessFromConfigList = ipAddresessFromConfig.split(",")
+else:
+    ipAddresessFromConfigList = []
+
 networkFromConfig = config["Targets"]["NetworkToScan"]
 UseJsonFileWithTargets = config["Targets"].getboolean("UseJsonFileWithTargets")
 
@@ -257,7 +286,7 @@ sshUserName = config["Credentials"]["SshUserName"]
 sshPassword = config["Credentials"]["SshPassword"]
 
 
-snmpCommunityName = config["Credentials"]["SnmpCommunityName"]
+#snmpCommunityName = config["Credentials"]["SnmpCommunityName"]
 deviceConfigurationSave = config["Outputs"]["DeviceConfigurationSave"]
 jsonNmapRaw = config["Outputs"]["JsonNmapRaw"]
 
@@ -275,18 +304,26 @@ interfacesIp = config["Outputs"]["InterfacesIp"]
 
 #FETCHING CONFIG
 
-if (networkFromConfig):
+if networkFromConfig:
     print(networkFromConfig)
 
-if ipAddresessFromConfig:
-    print(ipAddresessFromConfig)
+print("LIST", bool(ipAddresessFromConfigList))
+print("LIST LEN", len(ipAddresessFromConfigList))
 
 if UseJsonFileWithTargets: pass #Import Json data to ipAddresessToScan
 
 else:
-    if ipAddresessFromConfig and networkFromConfig: ipAddresessToScan = [str(ip) for ip in ipaddress.IPv4Network(networkFromConfig)]
-    elif ipAddresessFromConfig and not networkFromConfig: ipAddresessToScan = ipAddresessFromConfig
-    else: raise Exception("RTFM !!!")
+    if ipAddresessFromConfigList and networkFromConfig: #
+        exitMessage = "Wrong settings detected. Choose only one from 'NetworkToScan' or 'IpAddresessToScan' in the config, let the other one blank !!!"
+        logging.error(exitMessage)
+        sys.exit(exitMessage)
+        
+    elif (not ipAddresessFromConfigList) and networkFromConfig: ipAddresessToScan = [str(ip) for ip in ipaddress.IPv4Network(networkFromConfig)]
+    elif ipAddresessFromConfigList and (not networkFromConfig): ipAddresessToScan = ipAddresessFromConfigList
+    else: 
+        exitMessage = "Wrong settings detected. You must specify the targets !!!"
+        logging.error(exitMessage)
+        sys.exit(exitMessage)
 
 allDeviceData = []
 
